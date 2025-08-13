@@ -1,0 +1,156 @@
+openapi: 3.0.1
+info:
+  title: Learning Platform API (Gateway)
+  version: "1.0.0"
+  description: "Gateway that proxies to auth, courses, categories, student services."
+
+servers:
+  - url: http://localhost:5000
+    description: Local Gateway
+
+paths:
+  /auth/register:
+    post:
+      summary: Register user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string }
+                password: { type: string }
+                role:
+                  type: string
+                  enum: [admin, institute, faculty, student]
+      responses:
+        "201": { description: User registered }
+  /auth/login:
+    post:
+      summary: Login (returns JWT)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200": { description: JWT token returned }
+
+  /courses:
+    get:
+      summary: Get all courses
+      tags: [Courses]
+      responses:
+        "200": { description: list of courses }
+    post:
+      summary: Create a course (admin/institute)
+      tags: [Courses]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                categoryId: { type: string }
+                duration: { type: string }
+                price: { type: number }
+      responses:
+        "201": { description: course created }
+
+  /courses/{id}:
+    get:
+      summary: Get course by id
+      tags: [Courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: course object }
+
+  /categories:
+    get:
+      summary: Get all categories
+      tags: [Categories]
+      security:
+        - bearerAuth: []
+      responses:
+        "200": { description: list of categories }
+    post:
+      summary: Create category (admin)
+      tags: [Categories]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        "201": { description: created }
+
+  /students/courses:
+    get:
+      summary: Get courses (via course service)
+      tags: [Student]
+      security:
+        - bearerAuth: []
+      responses:
+        "200": { description: list of courses }
+
+  /students/enroll:
+    post:
+      summary: Enroll in a course (student)
+      tags: [Student]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                courseId: { type: string }
+      responses:
+        "201": { description: enrolled }
+
+  /students/my-enrollments:
+    get:
+      summary: Get my enrollments (student)
+      tags: [Student]
+      security:
+        - bearerAuth: []
+      responses:
+        "200": { description: enrollments list }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+tags:
+  - name: Auth
+  - name: Courses
+  - name: Categories
+  - name: Student
